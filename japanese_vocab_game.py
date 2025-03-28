@@ -95,23 +95,23 @@ class JapaneseVocabGame(tk.Tk):
         tk.Label(settings_frame, text="单词文件:").pack(side=tk.LEFT)
         self.file_var = tk.StringVar(value="")
         # Get all .xlsx files in current directory
-        excel_files = [f for f in os.listdir() if f.endswith('.xlsx')]
-        self.file_combobox = ttk.Combobox(
-            settings_frame, 
-            textvariable=self.file_var,
-            values=excel_files,
-            state="readonly",
-            width=15
-        )
-        # Get all .csv files in current directory
-        # csv_files = [f for f in os.listdir() if f.endswith('.csv')]
+        # excel_files = [f for f in os.listdir() if f.endswith('.xlsx')]
         # self.file_combobox = ttk.Combobox(
         #     settings_frame, 
         #     textvariable=self.file_var,
-        #     values=csv_files,
+        #     values=excel_files,
         #     state="readonly",
         #     width=15
         # )
+        # Get all .csv files in current directory
+        csv_files = [f for f in os.listdir() if f.endswith('.csv')]
+        self.file_combobox = ttk.Combobox(
+            settings_frame, 
+            textvariable=self.file_var,
+            values=csv_files,
+            state="readonly",
+            width=15
+        )
         self.file_combobox.pack(side=tk.LEFT, padx=5)
         self.file_combobox.bind("<<ComboboxSelected>>", lambda e: self.load_vocabulary())
         
@@ -235,7 +235,7 @@ class JapaneseVocabGame(tk.Tk):
         self.feedback_label.config(text="")
         
         # 自动播放发音
-        threading.Thread(target=self.generate_and_play_sound).start()
+        # threading.Thread(target=self.generate_and_play_sound).start()
         self.update_status()
         
     def generate_and_play_sound(self):

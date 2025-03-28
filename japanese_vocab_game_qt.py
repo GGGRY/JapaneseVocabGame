@@ -149,7 +149,7 @@ class JapaneseVocabGame(QMainWindow):
         # 初始化下拉菜单
         self.file_combo = QComboBox()
         self.file_combo.setStyleSheet("font-size: 12pt;")
-        excel_files = [f for f in os.listdir() if f.endswith('.xlsx')]
+        excel_files = [f for f in os.listdir() if f.endswith('.csv')]
         if excel_files:
             self.file_combo.addItems(excel_files)
             self.file_combo.setCurrentIndex(-1)  # No initial selection
