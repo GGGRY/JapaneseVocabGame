@@ -1,0 +1,950 @@
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日语单词记忆游戏 - 网页版</title>
+    <style>
+        :root {
+            --bg-color: #2d2d2d;
+            --text-color: #e0e0e0;
+            --button-bg: #3a3a3a;
+            --button-hover: #4a4a4a;
+            --button-active: #2a2a2a;
+            --border-color: #555;
+            --correct-color: #4CAF50;
+            --incorrect-color: #F44336;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei Light', 'Segoe UI', system-ui, sans-serif;
+            background-color: #000000E0;
+            color: var(--text-color);
+            margin: 0;
+            padding-top: 70px;
+            padding-left: 20px;
+            padding-right: 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            display: grid;
+            grid-template-rows: auto auto auto;
+            grid-template-columns: 3fr 6fr;
+            gap: 20px;
+            grid-template-areas: 
+                "status game"
+                "settings incorrect-words"
+                "word-list incorrect-words";
+            min-height: calc(100vh - 100px);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+            grid-template-columns: 1fr;
+            grid-template-areas: 
+                "game"
+                "status"
+                "incorrect-words"
+                "settings"        
+                "word-list";
+            }
+        }
+        
+        .game {
+            grid-area: game;
+            /* background-color:var(--bg-color); */
+            border-radius: 5px;
+            padding: 15px;
+            display: flex;
+            overflow: auto;
+            flex-direction: column;
+            /* min-height: 50vh;
+            max-height: 70vh; */
+        }
+
+        .word-list {
+            grid-area: word-list;
+            background-color:var(--bg-color);
+            border-radius: 5px;
+            padding: 15px;
+            overflow: auto;
+            min-height: 60vh;
+            max-height: 100vh;
+        }
+        
+        .word-list h2 {
+            margin-top: 0;
+        }
+        
+        .settings {
+            grid-area: settings;
+            background-color:var(--bg-color);
+            /* border: 1px solid var(--border-color); */
+            border-radius: 5px;
+            padding: 15px;
+        }
+
+        .settings h2 {
+            margin-top: 0;
+            text-align: center;
+        }
+
+        .incorrect-words {
+            grid-area: incorrect-words;
+            border: 1px solid var(--incorrect-color);
+            border-radius: 5px;
+            padding: 15px;
+            background-color: rgba(244, 67, 54, 0.1);
+        }
+        
+        .incorrect-words h2 {
+            color: var(--incorrect-color);
+            margin-top: 0;
+            text-align: center;
+        }
+
+        .status-area {
+            grid-area: status;
+            /* border: 1px solid var(--border-color); */
+            border-radius: 5px;
+            padding: 15px;
+            /* margin-bottom: 20px; */
+            display: grid;
+            grid-template-rows: auto auto auto;
+            gap: 10px;
+            /* min-height: 50vh;
+            max-height: 70vh; */
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 10px 10px;
+        }
+        
+        .status {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        
+        .status-item {
+            text-align: center;
+            font-size: 1rem;
+        }
+        
+        .status-label {
+            font-size: 0.875rem;
+            margin-bottom: 5px;
+        }
+        
+        .status-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .question-box {
+            background-color:var(--bg-color);
+            border-radius: 5px;
+            padding: 15px;
+            display: flex;
+            overflow: auto;
+            flex-direction: column;
+        }
+
+        .question {
+            font-size: 28pt;
+            text-align: center;
+            margin: 20px 0;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            word-break: break-all;
+        }
+        
+        .options-box {
+            background-color:var(--bg-color);
+            border-radius: 5px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            overflow: auto;
+            flex-direction: column;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 10px 10px;
+            overflow: hidden;
+        }
+        
+        .option-btn {
+            min-height: 6rem;
+            font-size: 1.2rem;
+            background-color: var(--button-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 5px;
+            color: var(--text-color);
+            padding: 1rem;
+            cursor: pointer;
+            overflow-wrap: break-word;
+            hyphens: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        @media (max-width: 480px) {
+            .options {
+                grid-template-columns: 1fr;
+            }
+            
+            .option-btn {
+                min-height: 3rem;
+                font-size: 1rem;
+                padding: 0.8rem;
+            }
+        }
+        
+        .option-btn:hover {
+            background-color: var(--button-hover);
+        }
+        
+        .option-btn:active {
+            background-color: var(--button-active);
+        }
+        
+        .option-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .feedback {
+            text-align: center;
+            font-size: 14pt;
+            min-height: 30px;
+            padding: 5px;
+            margin: 10px 10px;
+        }
+        
+        .correct {
+            text-align: center;
+            font-size: 14pt;
+            min-height: 30px;
+            padding: 5px;
+            margin: 10px 10px;
+            color: var(--correct-color);
+        }
+        
+        .incorrect {
+            text-align: center;
+            font-size: 14pt;
+            min-height: 30px;
+            padding: 5px;
+            margin: 10px 10px;
+            color: var(--incorrect-color);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #3a3a3a;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #252525;
+        }
+        
+        button {
+            background-color: var(--button-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            color: var(--text-color);
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        #start-btn {
+            background-color: #4CAF50;
+            padding: 10px 20px;
+            font-size: 16pt;
+            font-weight: bold;
+            border: 2px solid #3e8e41;
+        }
+
+        #start-btn:hover {
+            background-color: #45a049;
+        }
+
+        #start-btn:active {
+            background-color: #3e8e41;
+        }
+        
+        button:hover {
+            background-color: var(--button-hover);
+        }
+        
+        label {
+            color: var(--text-color);
+            padding: 5px;
+            font-size: 12pt;
+        }
+
+        select, input {
+            background-color: var(--button-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            color: var(--text-color);
+            padding: 5px;
+            margin-left: 10px;
+            font-size: 12pt;
+            text-align: center;
+        }
+        
+        #speak-btn {
+            font-size: 10pt;
+            margin: 10px auto;
+            padding: 10px 20px;
+            border: 0px;
+        }
+
+
+
+        #incorrect-words-body tr {
+            background-color: rgba(244, 67, 54, 0.05);
+        }
+
+        /* Topbar styles */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--bg-color);
+            border-bottom: 1px solid var(--border-color);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            justify-content: center;
+        }
+
+        .topbar h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .topbar-nav {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-item {
+            color: var(--text-color);
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .nav-item:hover {
+            background-color: var(--button-hover);
+        }
+
+        .nav-item:active {
+            background-color: var(--button-active);
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <nav class="topbar-nav">
+            <a href="#" class="nav-item" id="nav-game">游戏</a>
+            <a href="#" class="nav-item" id="nav-incorrect">错题记录</a>
+            <a href="#" class="nav-item" id="nav-settings">设置</a>
+            <a href="#" class="nav-item" id="nav-wordlist">单词列表</a>
+        </nav>
+    </div>
+    <div class="container">
+        <div class="status-area">
+            <div class="status-row">
+                <div class="status-item" id="correct-count">
+                    <div class="status-label">正确</div>
+                    <div class="status-value">0</div>
+                </div>
+                <div class="status-item" id="incorrect-count">
+                    <div class="status-label">失误</div>
+                    <div class="status-value">0</div>
+                </div>
+            </div>
+            <div class="status-row">
+                <div class="status-item" id="accuracy">
+                    <div class="status-label">正确率</div>
+                    <div class="status-value">0%</div>
+                </div>
+                <div class="status-item" id="time-elapsed">
+                    <div class="status-label">时长</div>
+                    <div class="status-value">0:00</div>
+                </div>
+            </div>
+            <div class="status-row", style="margin-top: 60px;">
+                <button id="reset-btn" style="margin-left: 10px; padding: 10px 20px; font-size: 16pt; background-color: #f44336; border: 2px solid #d32f2f;">重置</button>
+                <button id="start-btn">开始</button>
+            </div>
+        </div>
+        <div class="word-list">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2>单词列表</h2>
+                <button id="file-select" style="padding: 8px 15px; font-size: 14pt; background-color: #4CAF50; border: none; border-radius: 5px; color: white; cursor: pointer;">
+                    📂 选择单词文件
+                </button>
+            </div>
+            <table id="word-table">
+                <thead>
+                    <tr>
+                        <th>单词</th>
+                        <th>假名</th>
+                        <th>中文</th>
+                    </tr>
+                </thead>
+                <tbody id="word-list-body">
+                    <!-- Words will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="settings">
+                <h2>设置</h2>
+                <div style="display: flex; gap: 10px; align-items: flex-start; flex-direction: column;">
+                    <div style="margin-bottom: 10px; font-size: 12pt;">
+                        <label for="question-type">出题</label>
+                        <select id="question-type">
+                            <option value="kana">假名</option>
+                            <option value="word">单词</option>
+                            <option value="meaning">中文</option>
+                            <option value="pron">读音</option>
+                        </select>
+                        <label for="answer-type", style="margin-left: 10px;">答案</label>
+                        <select id="answer-type">
+                            <option value="meaning">中文</option>
+                            <option value="word">单词</option>
+                            <option value="kana">假名</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 10px; font-size: 12pt;">
+                        <label for="question-count">题数</label>
+                        <input type="number" id="question-count" min="1" value="20" style="width: 60px;">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="game">
+                <div class="question-box">
+                    <div class="question" id="question-text"></div>
+                    <button id="speak-btn" disabled>🔊 播放发音</button>
+                </div>
+                <div class="options-box">
+                    <div class="feedback" id="feedback-text"></div>
+                    <div class="options" id="options-container">
+                        <button class="option-btn" id="option-0" disabled></button>
+                        <button class="option-btn" id="option-1" disabled></button>
+                        <button class="option-btn" id="option-2" disabled></button>
+                        <button class="option-btn" id="option-3" disabled></button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="incorrect-words">
+                <h2>错题记录</h2>
+                <table id="incorrect-words-table">
+                    <thead>
+                        <tr>
+                            <th>单词</th>
+                            <th>假名</th>
+                            <th>正确</th>
+                            <th>错选</th>
+                        </tr>
+                    </thead>
+                    <tbody id="incorrect-words-body">
+                        <!-- Incorrect words will be displayed here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    
+    <script>
+        // Game state
+        const gameState = {
+            wordDict: {},
+            questionType: 'kana', // Default to kana
+            answerType: 'meaning', // Default to meaning
+            timer: null,
+            startTime: 0,
+            elapsedTime: 0,
+            totalQuestions: 20,
+            currentQuestion: 0,
+            correctCount: 0,
+            incorrectCount: 0,
+            incorrectWords: [],
+            currentWord: '',
+            currentKana: '',
+            currentmeaning: '',
+            correctAnswer: '',
+            speechSynthesis: window.speechSynthesis,
+            isPaused: false,
+            gameLog: {
+                startTime: null,
+                endTime: null,
+                questions: [],
+                settings: {}
+            }
+        };
+
+        // DOM elements
+        const elements = {
+            fileSelect: document.getElementById('file-select'),
+            questionCount: document.getElementById('question-count'),
+            startBtn: document.getElementById('start-btn'),
+            wordListBody: document.getElementById('word-list-body'),
+            correctCount: document.getElementById('correct-count'),
+            incorrectCount: document.getElementById('incorrect-count'),
+            accuracy: document.getElementById('accuracy'),
+            questionText: document.getElementById('question-text'),
+            speakBtn: document.getElementById('speak-btn'),
+            feedbackText: document.getElementById('feedback-text'),
+            optionBtns: [
+                document.getElementById('option-0'),
+                document.getElementById('option-1'),
+                document.getElementById('option-2'),
+                document.getElementById('option-3')
+            ],
+            incorrectWordsBody: document.getElementById('incorrect-words-body')
+        };
+
+        // Initialize file selector
+        function initFileSelector() {
+            // In web version, user will need to manually select files
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.csv';
+            fileInput.style.display = 'none';
+            document.body.appendChild(fileInput);
+
+            // Store reference to file input
+            elements.fileInput = fileInput;
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                console.log('Selected file:', file.name);
+                
+                // Update button text to show filename without extension
+                elements.fileSelect.textContent = file.name.replace(/\.[^/.]+$/, "");
+
+                // Load vocabulary
+                loadVocabulary(file);
+            });
+
+            // Trigger file input when select is clicked
+            elements.fileSelect.addEventListener('click', (e) => {
+                elements.fileInput.value = ''; // 重置以允许重复选择同一文件
+                elements.fileInput.click();
+            });
+        }
+
+        // Load vocabulary from file
+        function loadVocabulary(file) {
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                try {
+                    const data = e.target.result;
+                    let words = [];
+                    
+                    if (file.name.endsWith('.csv')) {
+                        // Parse CSV - simpler approach that splits on commas
+                        const lines = data.split('\n')
+                            .map(line => line.trim())
+                            .filter(line => line && !line.startsWith('单词')); // Skip empty lines and header
+                        
+                        words = lines.map((line, index) => {
+                            const parts = line.split(',').map(part => part.trim());
+                            if (parts.length < 3) {
+                                throw new Error(`第 ${index + 2} 行数据不完整`);
+                            }
+                            return {
+                                japanese: parts[0],
+                                kana: parts[1],
+                                meaning: parts[3] // Use 3rd column or fallback to kana
+                            };
+                        });
+                        
+                        gameState.wordDict = {};
+                        words.forEach(word => {
+                            gameState.wordDict[word.japanese] = [word.kana, word.meaning];
+                        });
+                        
+                        // Update word list display
+                        updateWordList();
+                    }
+                } catch (error) {
+                    alert(`加载单词文件失败: ${error}`);
+                }
+            };
+
+            if (file.name.endsWith('.csv')) {
+                reader.readAsText(file, 'UTF-8');
+            } else {
+                reader.readAsBinaryString(file);
+            }
+        }
+        // Update word list display
+        function updateWordList() {
+            elements.wordListBody.innerHTML = '';
+            
+            for (const [japanese, [kana, meaning]] of Object.entries(gameState.wordDict)) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${japanese}</td>
+                    <td>${kana}</td>
+                    <td>${meaning}</td>
+                `;
+                elements.wordListBody.appendChild(row);
+            }
+        }
+
+        // Toggle pause/continue game
+        function togglePause() {
+            if (gameState.isPaused) {
+                // Continue game
+                gameState.isPaused = false;
+                elements.startBtn.textContent = '暂停';
+                gameState.startTime = Date.now() - gameState.elapsedTime;
+                gameState.timer = setInterval(updateTimer, 1000);
+            } else {
+                // Pause game
+                gameState.isPaused = true;
+                elements.startBtn.textContent = '继续';
+                clearInterval(gameState.timer);
+                // gameState.timer = null;
+                gameState.elapsedTime = Date.now() - gameState.startTime;
+            }
+        }
+
+        // Start game
+        function startGame() {
+            if (gameState.timer) {
+                // Game is running, toggle pause
+                togglePause();
+                return;
+            }
+            
+            if (Object.keys(gameState.wordDict).length === 0) {
+                alert('单词列表为空，请先加载单词文件');
+                return;
+            }
+            
+            try {
+                gameState.totalQuestions = parseInt(elements.questionCount.value);
+                if (isNaN(gameState.totalQuestions) || gameState.totalQuestions < 1) {
+                    throw new Error('请输入有效的题目数量');
+                }
+            } catch (error) {
+                alert(error.message);
+                return;
+            }
+            
+            // Only reset counters if not continuing from pause
+            gameState.currentQuestion = 0;
+            gameState.correctCount = 0;
+            gameState.incorrectCount = 0;
+            gameState.incorrectWords = [];
+            gameState.elapsedTime = 0;
+            gameState.startTime = Date.now();
+            gameState.isPaused = false;
+
+            // Get question type selection
+            const questionTypeSelect = document.getElementById('question-type');
+            const answerTypeSelect = document.getElementById('answer-type');
+            gameState.questionType = questionTypeSelect.value; 
+            gameState.answerType = answerTypeSelect.value;
+            
+            // Start timer
+            if (gameState.timer) {
+                clearInterval(gameState.timer);
+            }
+            gameState.timer = setInterval(updateTimer, 1000);
+            
+            elements.startBtn.textContent = '暂停';
+            updateStatus();
+            newQuestion();
+        }
+
+        // Generate new question
+        function newQuestion() {
+            if (gameState.currentQuestion >= gameState.totalQuestions) {
+                gameOver();
+                return;
+            }
+            
+            gameState.currentQuestion++;          
+
+            // Get random word
+            const words = Object.entries(gameState.wordDict);
+            const [word, [kana, meaning]] = words[Math.floor(Math.random() * words.length)];
+            gameState.currentWord = word;
+            gameState.currentKana = kana;
+            gameState.currentmeaning = meaning;
+            gameState.correctAnswer = gameState.answerType === 'word' ? word : 
+                                        gameState.answerType === 'kana' ? kana : meaning;
+
+            // Get wrong answers
+            const wrongAnswers = [];
+            while (wrongAnswers.length < 3) {
+                const [randomWord, [randomKana, randomMeaning]] = words[Math.floor(Math.random() * words.length)];
+                if (randomWord !== word) {
+                    wrongAnswer = gameState.answerType === 'word' ? randomWord : 
+                                        gameState.answerType === 'kana' ? randomKana : randomMeaning;
+                    if (!wrongAnswers.includes(wrongAnswer)){
+                        wrongAnswers.push(wrongAnswer);
+                    }
+                }
+            }
+            
+            // Shuffle options
+            const options = [gameState.correctAnswer, ...wrongAnswers];
+            for (let i = options.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [options[i], options[j]] = [options[j], options[i]];
+            }
+            
+            // Update UI
+             // elements.questionText.textContent = gameState.questionType === 'word' ? word : kana;
+            if ( gameState.questionType === 'word') {
+                elements.questionText.textContent = word;
+            } else if ( gameState.questionType === 'meaning') {
+                elements.questionText.textContent = meaning;
+            } else if ( gameState.questionType === 'pron') {
+                elements.questionText.textContent = '';
+            } else {
+                elements.questionText.textContent = kana;
+            }
+
+            elements.optionBtns.forEach((btn, i) => {
+                btn.textContent = options[i];
+                btn.disabled = false;
+                btn.style.backgroundColor = '';
+                btn.style.color = '';
+            });
+            elements.speakBtn.disabled = false;
+            elements.feedbackText.textContent = '  ';
+            elements.feedbackText.className = 'feedback';
+            
+            // Auto-play pronunciation
+            playSound();
+            
+            updateStatus();
+        }
+
+        // Play sound using Web Speech API
+        function playSound() {
+            if (!gameState.speechSynthesis) {
+                alert('您的浏览器不支持语音合成');
+                return;
+            }
+            
+            const utterance = new SpeechSynthesisUtterance(gameState.currentWord);
+            utterance.lang = 'ja-JP';
+            utterance.rate = 0.8;
+            gameState.speechSynthesis.speak(utterance);
+        }
+
+        // Update status display
+        function updateStatus() {
+            document.querySelector('#correct-count .status-value').textContent = gameState.correctCount;
+            document.querySelector('#incorrect-count .status-value').textContent = gameState.incorrectCount;
+            
+            const total = gameState.correctCount + gameState.incorrectCount;
+            const accuracy = total > 0 ? Math.round((gameState.correctCount / total) * 100) : 0;
+            document.querySelector('#accuracy .status-value').textContent = `${accuracy}%`;
+        }
+
+        // Check answer
+        function checkAnswer(selectedIdx) {
+            // Disable buttons
+            elements.optionBtns.forEach(btn => btn.disabled = true);
+            elements.speakBtn.disabled = true;
+            
+            const selectedText = elements.optionBtns[selectedIdx].textContent;
+            
+            if (selectedText === gameState.correctAnswer) {
+                handleCorrect();
+            } else {
+                handleIncorrect(selectedText);
+            }
+        }
+
+        // Handle correct answer
+        function handleCorrect() {
+            gameState.correctCount++;
+            elements.feedbackText.textContent = '✓ 回答正确！';
+            elements.feedbackText.className = 'correct';
+            updateStatus();
+            
+            // Show next question after delay
+            setTimeout(() => {
+                if (!gameState.timer) {
+                    gameState.timer = setInterval(updateTimer, 1000);
+                }
+                newQuestion();
+            }, 500);
+        }
+
+        // Handle incorrect answer
+        function handleIncorrect(selectedText) {
+            gameState.incorrectCount++;
+            const incorrectWord = {
+                word: gameState.currentWord,
+                kana: gameState.currentKana,
+                meaning: gameState.correctAnswer,
+                selected: selectedText
+            };
+            gameState.incorrectWords.push(incorrectWord);
+            
+            // Update incorrect words table
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${incorrectWord.word}</td>
+                <td>${incorrectWord.kana}</td>
+                <td>${incorrectWord.meaning}</td>
+                <td>${incorrectWord.selected}</td>
+            `;
+            elements.incorrectWordsBody.appendChild(row);
+            
+            elements.feedbackText.textContent = `✗ 回答错误！`;
+            elements.feedbackText.className = 'incorrect';
+            updateStatus();
+            
+            // Show next question after delay
+            setTimeout(() => {
+                if (!gameState.timer) {
+                    gameState.timer = setInterval(updateTimer, 1000);
+                }
+                newQuestion();
+            }, 1000);
+        }
+
+        // Game over
+        function gameOver() {
+            // Reset game
+            if (gameState.timer) {
+                clearInterval(gameState.timer);
+                gameState.timer = null;
+            }
+            elements.startBtn.textContent = '开始';
+            elements.questionText.textContent = '';
+            elements.feedbackText.textContent = '';
+            elements.optionBtns.forEach(btn =>{
+                btn.disabled = true;
+                btn.textContent = '';
+            });
+            elements.speakBtn.disabled = true;
+        }
+
+        // Update timer display
+        function updateTimer() {
+            const elapsedSeconds = Math.floor((Date.now() - gameState.startTime) / 1000);
+            const minutes = Math.floor(elapsedSeconds / 60);
+            const seconds = elapsedSeconds % 60;
+            document.querySelector('#time-elapsed .status-value').textContent = 
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Reset game state
+        function resetGame() {
+            // Clear timer
+            if (gameState.timer) {
+                clearInterval(gameState.timer);
+                gameState.timer = null;
+            }
+            
+            // Reset counters
+            gameState.currentQuestion = 0;
+            gameState.correctCount = 0;
+            gameState.incorrectCount = 0;
+            gameState.incorrectWords = [];
+            gameState.elapsedTime = 0;
+            
+            // Reset UI
+            elements.startBtn.textContent = '开始';
+            elements.questionText.textContent = '';
+            elements.feedbackText.textContent = '';
+            elements.optionBtns.forEach(btn => {
+                btn.textContent = '';
+                btn.disabled = true;
+                btn.style.backgroundColor = '';
+                btn.style.color = '';
+            });
+            elements.speakBtn.disabled = true;
+            elements.incorrectWordsBody.innerHTML = '';
+            
+            updateStatus();
+        }
+
+        // Initialize event listeners
+        function initEventListeners() {
+            elements.startBtn.addEventListener('click', startGame);
+            document.getElementById('reset-btn').addEventListener('click', resetGame);
+            elements.speakBtn.addEventListener('click', playSound);
+            
+            elements.optionBtns.forEach((btn, i) => {
+                btn.addEventListener('click', () => {
+                    if (!gameState.isPaused) {
+                        checkAnswer(i);
+                    }
+                });
+            });
+        }
+
+        // Initialize app
+        function init() {
+            initFileSelector();
+            initEventListeners();
+            
+            // Add navigation event listeners
+            document.getElementById('nav-game').addEventListener('click', () => {
+                document.querySelector('.game').scrollIntoView({ behavior: 'smooth' });
+            });
+            document.getElementById('nav-incorrect').addEventListener('click', () => {
+                document.querySelector('.incorrect-words').scrollIntoView({ behavior: 'smooth' });
+            });
+            document.getElementById('nav-settings').addEventListener('click', () => {
+                document.querySelector('.settings').scrollIntoView({ behavior: 'smooth' });
+            });
+            document.getElementById('nav-wordlist').addEventListener('click', () => {
+                document.querySelector('.word-list').scrollIntoView({ behavior: 'smooth' });
+            });
+        }
+
+        // Start app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
